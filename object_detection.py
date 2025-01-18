@@ -1,9 +1,21 @@
-# Libraries used in the code
+import os
+import urllib.request
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 from tkinter import Tk
 from tkinter.filedialog import askopenfilename
+
+weights_path = "yolov3.weights"
+weights_url = "https://pjreddie.com/media/files/yolov3.weights"
+
+def download_weights():
+    print("Downloading YOLOv3 weights...")
+    urllib.request.urlretrieve(weights_url, weights_path)
+    print("Download complete.")
+
+if not os.path.exists(weights_path) or os.path.getsize(weights_path) < 248007048:  # Expected size of weights file
+    download_weights()
 
 # Function to get image path
 def get_image_path():
@@ -12,12 +24,15 @@ def get_image_path():
     return file_path
 
 # Load YOLO model
-yolo = cv2.dnn.readNet(r"D:\Object_Detection\yolov3.weights", r"D:\Object_Detection\yolov3.cfg")
-
+try:
+    yolo = cv2.dnn.readNet(weights_path, "yolov3.cfg")
+except Exception as e:
+    print(f"Error loading YOLO model: {e}")
+    exit()
 
 # Load COCO classes
 obj = []
-with open(r"D:\Object_Detection\coco.names", 'r') as f:
+with open("coco.names", 'r') as f:
     obj = f.read().splitlines()
 
 # Get image path from user
@@ -37,7 +52,7 @@ detections = yolo.forward(detection_layers)
 boxes = []
 probab = []
 obj_ids = []
-class_counts = {}  
+class_counts = {}
 
 for output in detections:
     for detect in output:
@@ -45,7 +60,7 @@ for output in detections:
         obj_id = np.argmax(scores)
         confidence = scores[obj_id]
 
-        if confidence > 0.7:  
+        if confidence > 0.7:
             center_x = int(detect[0] * width)
             center_y = int(detect[1] * height)
             w = int(detect[2] * width)
@@ -78,8 +93,8 @@ for class_name, count in class_counts.items():
 indexes = cv2.dnn.NMSBoxes(boxes, probab, 0.5, 0.4)
 
 # Draw bounding boxes
-font = cv2.FONT_HERSHEY_PLAIN 
-colors = np.random.randint(0, 255, size=(len(obj), 3), dtype='uint8')  
+font = cv2.FONT_HERSHEY_PLAIN
+colors = np.random.randint(0, 255, size=(len(obj), 3), dtype='uint8')
 
 for i in indexes.flatten():
     x, y, w, h = boxes[i]
