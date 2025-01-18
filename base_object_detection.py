@@ -1,3 +1,5 @@
+# This a base code it work locally so to use it gobally user can use "object_detection.py".
+
 # Libraries used in the code
 import cv2
 import numpy as np
